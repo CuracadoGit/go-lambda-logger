@@ -42,8 +42,17 @@ func init() {
 		level = slog.LevelError
 	}
 
-	lg = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{ReplaceAttr: replace, Level: level}))
+	switch os.Getenv("AWS_LAMBDA_LOG_FORMAT") {
+	case "JSON":
+		lg = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{ReplaceAttr: replace, Level: level}))
+		break
+	default:
+		lg = slog.New(slog.NewJSONHandler(&jsonToTextWriter{w: os.Stdout}, &slog.HandlerOptions{ReplaceAttr: replace, Level: level}))
+		break
+	}
+
 }
+
 
 func handlerForContext(ctx context.Context, args ...any) *slog.Logger {
 	h := lg
