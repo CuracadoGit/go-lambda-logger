@@ -12,6 +12,9 @@ import (
 
 var lg *slog.Logger
 
+type loggerContextKey string
+var addedContextDataKey loggerContextKey = "addedContextData"
+
 func init() {
 	// log prefixes
 	log.SetFlags(0)
@@ -53,6 +56,11 @@ func init() {
 
 }
 
+// WithContextValues will add additional values to the context. These values will be added to all log entries using the context.
+func WithContextValues(ctx context.Context, data map[string]interface{}) context.Context {
+
+	return context.WithValue(ctx, addedContextDataKey, data)
+}
 
 func handlerForContext(ctx context.Context, args ...any) *slog.Logger {
 	h := lg
@@ -70,6 +78,14 @@ func handlerForContext(ctx context.Context, args ...any) *slog.Logger {
 				break
 			}
 		}
+	}
+
+	if values, has := ctx.Value(addedContextDataKey).(map[string]interface{}); has == true {
+		for k, v := range values {
+			args = append(args, k)
+			args = append(args, v)
+		}
+
 	}
 
 	return h.With(args...)
